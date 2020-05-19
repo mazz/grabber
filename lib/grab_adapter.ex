@@ -23,6 +23,12 @@ defmodule GrabAdapter do
     cmd = "python metadatagrabber.py ytchanneldata #{ytchannel}"
     port = Port.open({:spawn, cmd}, [:binary, :exit_status])
     state = Map.put(state, :port, port)
+
+    {:noreply, state}
+  end
+
+  def handle_info({port, {:exit_status, exit_status}}, state) do
+    IO.puts "Received exit_status from port: #{exit_status}"
     {:noreply, state}
   end
 
@@ -31,16 +37,26 @@ defmodule GrabAdapter do
 
     # {:ok, video} = Jaxon.decode(~s(#{msg}))
 
-    # decoded = Jason.decode!(~s(#{msg}))
-
+    try do
+      decoded = Jason.decode!(~s(#{msg}))
+    catch
+      :error, _ -> IO.puts "there was an error decoding JSON"
+      {:error, message} -> IO.puts "there was an error: #{message}"
+    end
 
     # fulltitle = Map.get(decoded, "fulltitle")
     # IO.puts "fulltitle: #{fulltitle}"
 
     stream = [~s(#{msg})]
 
-    title =
-    stream |> Jaxon.Stream.from_enumerable() |> Jaxon.Stream.query([:root, "title"]) |> Enum.to_list()
+    try do
+      title =
+      stream |> Jaxon.Stream.from_enumerable() |> Jaxon.Stream.query([:root, "title"]) |> Enum.to_list()
+      IO.puts "title: #{title}"
+    catch
+      :error, _ -> IO.puts "there was an error with no message"
+      {:error, message} -> IO.puts "there was an error: #{message}"
+    end
 
     # stream |> Jaxon.Stream.from_enumerable() |> Jaxon.Stream.query(Jaxon.Path.parse!("$.title")) |> Enum.to_list()
     # fulltitle =
@@ -48,9 +64,6 @@ defmodule GrabAdapter do
     #   |> Jaxon.Stream.from_enumerable()
     #   |> Jaxon.Stream.query([:root, "fulltitle"])
     #   |> Enum.to_list()
-
-    IO.puts "title: #{title}"
-
     {:noreply, state}
   end
 end
