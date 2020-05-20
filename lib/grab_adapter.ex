@@ -13,17 +13,11 @@ defmodule GrabAdapter do
   def init(ytchannel) do
     state = %{
       port: nil,
-      ytchannel: ytchannel,
-      chunk: ""
+      ytchannel: ytchannel
     }
 
-    # try do
-    #   :ets.new(:chunk_lookup, [:set, :protected, :named_table])
-    #   :ets.insert(:chunk_lookup, {"chunk", ""}) # start off with empty string
-    # catch
-    #   :error, _ -> IO.puts "there was an error generating ets table"
-    #   {:error, message} -> IO.puts "there was an error generating ets table: #{message}"
-    # end
+    :ets.new(:chunk_lookup, [:set, :protected, :named_table])
+    :ets.insert(:chunk_lookup, {"chunk", ""}) # start off with empty string
 
 
     # :ets.lookup_element(:chunk_lookup, "chunk", 2)
@@ -31,7 +25,7 @@ defmodule GrabAdapter do
     {:ok, state, {:continue, :start_grabbing}}
   end
 
-  def handle_continue(:start_grabbing, state = %{ytchannel: ytchannel, chunk: chunk}) do
+  def handle_continue(:start_grabbing, state = %{ytchannel: ytchannel}) do
     # "python metadatagrabber.py ytchanneldata https://www.youtube.com/channel/UCMCMaXiCRuervjaVe7_gf8w"
     # da lata "https://www.youtube.com/channel/UCIlFrdZCFUPlvlbgdyu1xdQ"
 
@@ -53,8 +47,8 @@ defmodule GrabAdapter do
     # {:ok, video} = Jaxon.decode(~s(#{msg}))
 
     # fragment = @partial
-    # fragment = :ets.lookup_element(:chunk_lookup, "chunk", 2)
-    fragment = Map.get(state, "chunk")
+    fragment = :ets.lookup_element(:chunk_lookup, "chunk", 2)
+    # fragment = Map.get(state, "chunk")
 
 
     # try do
@@ -79,16 +73,16 @@ defmodule GrabAdapter do
           IO.puts "title: #{title}"
 
         # @partial = ""
-        # :ets.insert(:chunk_lookup, {"chunk", ""})
-        state = Map.put(state, "chunk", "")
+        :ets.insert(:chunk_lookup, {"chunk", ""})
+        # state = Map.put(state, "chunk", "")
 
 
       {:error, _} ->
         IO.puts "there was an error decoding intermediate"
 
         # @partial = building_string
-        # :ets.insert(:chunk_lookup, {"chunk", intermediate})
-        state = Map.put(state, "chunk", intermediate)
+        :ets.insert(:chunk_lookup, {"chunk", intermediate})
+        # state = Map.put(state, "chunk", intermediate)
 
     end
 
