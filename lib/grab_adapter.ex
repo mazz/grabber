@@ -38,6 +38,10 @@ defmodule GrabAdapter do
 
   def handle_info({port, {:exit_status, exit_status}}, state) do
     IO.puts "Received exit_status from port: #{exit_status}"
+
+    :ets.delete(:chunk_lookup, "chunk")
+    :ets.delete(:chunk_lookup)
+
     {:noreply, state}
   end
 
